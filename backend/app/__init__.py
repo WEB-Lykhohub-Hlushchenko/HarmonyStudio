@@ -1,24 +1,19 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from backend.config import Config
-
-db = SQLAlchemy()
-migrate = Migrate()
+from backend.app.extensions import db, migrate
+from backend.app.routes import register_routes
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)  # Підключення конфігурації
-    db.init_app(app)  # Ініціалізація SQLAlchemy
-    migrate.init_app(app, db)  # Ініціалізація Flask-Migrate
+    app.config.from_object(Config)
+    db.init_app(app)
+    migrate.init_app(app, db)
 
-    # Імпорт маршруту після ініціалізації db
-    from backend.app.routes.auth import auth_bp
-    app.register_blueprint(auth_bp, url_prefix='/auth')
+    # Реєстрація маршрутів
+    register_routes(app)
 
-    # Імпорт моделей після ініціалізації db (щоб уникнути циклічних імпортів)
+    # Імпортуємо моделі для доступності у міграціях
     with app.app_context():
-        from backend.app import models
-        print(models.User)  # Перевірка, чи імпортується модель
+        from backend.app.models import user, service, master, booking
 
     return app
