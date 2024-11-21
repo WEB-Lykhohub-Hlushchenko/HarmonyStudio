@@ -1,4 +1,4 @@
-from app import db  # або імпорт моделей безпосередньо
+from backend.app import db  # або імпорт моделей безпосередньо
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
