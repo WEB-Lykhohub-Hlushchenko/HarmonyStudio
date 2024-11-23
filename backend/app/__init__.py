@@ -3,6 +3,7 @@ from backend.config import Config
 from backend.app.extensions import db, migrate
 from backend.app.routes import register_routes
 
+
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)

@@ -1,33 +1,51 @@
 from flask import Blueprint, request, jsonify
-from werkzeug.security import generate_password_hash, check_password_hash
-from backend.app import db
-from backend.app.models import User
+from backend.app.models.user import User
+from backend.app.extensions import db
+from datetime import datetime
 
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    data = request.get_json()
-    hashed_password = generate_password_hash(data['password'], method='sha256')
+    try:
+        data = request.get_json()
+        role = data.get('role')
+        if role not in ['client', 'master']:
+            return jsonify({"error": "Invalid role"}), 400
 
-    user = User(
-        role=data['role'],
-        first_name=data['first_name'],
-        last_name=data['last_name'],
-        email=data['email'],
-        password=hashed_password
-    )
+        # Перевірка існуючого email
+        if User.query.filter_by(email=data.get('email')).first():
+            return jsonify({"error": "Email already exists"}), 400
 
-    db.session.add(user)
-    db.session.commit()
+        new_user = User(
+            role=role,
+            first_name=data.get('first_name'),
+            last_name=data.get('last_name'),
+            middle_name=data.get('middle_name'),
+            date_of_birth=datetime.strptime(data.get('date_of_birth'), "%Y-%m-%d"),
+            phone_number=data.get('phone_number'),
+            email=data.get('email')
+        )
+        new_user.set_password(data.get('password'))
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({"message": "User registered successfully"}), 201
+    except Exception as e:
+        return jsonify({"error": "An error occurred", "details": str(e)}), 500
 
-    return jsonify({'message': 'User registered successfully'}), 201
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    data = request.get_json()
-    user = User.query.filter_by(email=data['email']).first()
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
 
-    if user and check_password_hash(user.password, data['password']):
-        return jsonify({'message': 'Login successful'}), 200
-    return jsonify({'message': 'Invalid credentials'}), 401
+        user = User.query.filter_by(email=email).first()
+        if user and user.check_password(password):
+            return jsonify({"message": "Login successful", "user": user.to_dict()}), 200
+        else:
+            return jsonify({"error": "Invalid email or password"}), 401
+    except Exception as e:
+        return jsonify({"error": "An error occurred", "details": str(e)}), 500
