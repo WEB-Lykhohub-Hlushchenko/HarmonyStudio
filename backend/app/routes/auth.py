@@ -43,7 +43,17 @@ def register():
             new_client = Client(id=new_user.id)
             db.session.add(new_client)
         elif role == 'master':
-            new_master = Master(id=new_user.id)
+            service_id = data.get('service_id')
+            bio = data.get('bio', '')
+
+            if not service_id:
+                return jsonify({"error": "Service ID is required for master"}), 400
+
+            new_master = Master(
+                user_id=new_user.id,
+                service_id=service_id,
+                bio=bio
+            )
             db.session.add(new_master)
 
         db.session.commit()
@@ -79,14 +89,17 @@ def login():
                     "user": user.to_dict()
                 }), 200
             elif user.role == 'master':
+                master = Master.query.filter_by(user_id=user.id).first()
+                if not master:
+                    return jsonify({"error": "Master details not found"}), 404
+
                 return jsonify({
                     "message": "Welcome to the master dashboard",
                     "redirect": "/master-dashboard",
-                    "user": user.to_dict()
+                    "user": user.to_dict(),
+                    "master_details": master.to_dict()
                 }), 200
         else:
             return jsonify({"error": "Invalid email or password"}), 401
     except Exception as e:
         return jsonify({"error": "An error occurred", "details": str(e)}), 500
-
-
