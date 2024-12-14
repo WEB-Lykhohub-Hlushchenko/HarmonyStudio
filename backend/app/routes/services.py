@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import SQLAlchemyError
-from backend.app.models import Service
+from backend.app.models import Service, Master, User
 from backend.app.extensions import db
 
 services_bp = Blueprint('services', __name__, url_prefix='/services')
@@ -18,10 +18,38 @@ def get_services():
 
 @services_bp.route('/<int:service_id>', methods=['GET'])
 def get_service(service_id):
-    """Отримати інформацію про конкретний сервіс"""
+    """Отримати інформацію про конкретний сервіс разом із майстрами"""
     try:
+        # Отримуємо сервіс за ID
         service = Service.query.get_or_404(service_id)
-        return jsonify(service.to_dict()), 200
+
+        # Отримуємо майстрів, прив'язаних до цього сервісу
+        masters = (
+            db.session.query(Master, User)
+            .join(User, Master.user_id == User.id)
+            .filter(Master.service_id == service.id)
+            .all()
+        )
+
+        # Формуємо список майстрів
+        specialists = [
+            {
+                "id": user.id,
+                "name": f"{user.first_name} {user.last_name}",
+                "age": calculate_age(user.date_of_birth),
+                "bio": master.bio,
+                "image": "/path/to/default-avatar.jpg",  # Замініть на реальний шлях до фото
+            }
+            for master, user in masters
+        ]
+
+        return jsonify({
+            "id": service.id,
+            "name": service.name,
+            "description": service.description,
+            "specialists": specialists,
+        }), 200
+
     except SQLAlchemyError as e:
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
@@ -82,3 +110,10 @@ def delete_service(service_id):
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
         return jsonify({"error": "Unexpected error", "details": str(e)}), 500
+
+
+def calculate_age(birth_date):
+    """Розрахувати вік на основі дати народження"""
+    from datetime import date
+    today = date.today()
+    return today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
