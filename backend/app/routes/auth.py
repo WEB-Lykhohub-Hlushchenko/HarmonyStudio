@@ -10,9 +10,6 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
-    """
-    Реєстрація нового користувача (клієнт або майстер).
-    """
     try:
         data = request.get_json()
         role = data.get('role')
