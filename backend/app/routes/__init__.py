@@ -16,4 +16,3 @@ def register_routes(app):
     app.register_blueprint(clients_bp, url_prefix='/clients')
     app.register_blueprint(news_bp,  url_prefix='/news')
     app.register_blueprint(reviews_bp, url_prefix='/reviews')
-

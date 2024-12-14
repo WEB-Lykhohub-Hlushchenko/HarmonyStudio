@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy.exc import SQLAlchemyError
 from backend.app.models import Service
-from backend.app import db
+from backend.app.extensions import db
 
 services_bp = Blueprint('services', __name__, url_prefix='/services')
 

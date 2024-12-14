@@ -3,20 +3,20 @@ from backend.app.extensions import db
 from backend.app.models.user import User
 from datetime import datetime
 import click
+from flask_cors import CORS
 
 app = create_app()
+CORS(app)
+
 
 @app.cli.command("create-admin")
 @click.argument("email")
 @click.argument("password")
 def create_admin(email, password):
-    """Команда для створення адміністратора"""
-    # Перевірка, чи вже існує адміністратор з таким email
     if User.query.filter_by(email=email).first():
         print(f"Admin with email {email} already exists.")
         return
 
-    # Створення адміністратора
     new_admin = User(
         role='admin',
         first_name="Admin",
@@ -30,5 +30,6 @@ def create_admin(email, password):
     db.session.commit()
     print(f"Admin with email {email} created successfully.")
 
+
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0', port=5000)
