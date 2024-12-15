@@ -5,6 +5,7 @@ from backend.app.models.service import Service
 from backend.app.models.booking import Booking
 from backend.app.extensions import db
 from sqlalchemy.exc import IntegrityError
+import json
 
 bookings_bp = Blueprint('bookings', __name__, url_prefix='/bookings')
 
@@ -24,6 +25,7 @@ def get_booking(booking_id):
 def create_booking():
     """Створити нове бронювання"""
     data = request.get_json()
+    print("Received booking data:", json.dumps(data, indent=4))  # Логування отриманих даних
 
     try:
         # Перевірка існування користувача, майстра та послуги
@@ -40,7 +42,7 @@ def create_booking():
             master_id=data.get('master_id'),
             service_id=data.get('service_id'),
             booking_datetime=data.get('booking_datetime'),
-            status=data.get('status')
+            status=data.get('status', 'pending')  # Значення за замовчуванням для статусу
         )
 
         db.session.add(new_booking)

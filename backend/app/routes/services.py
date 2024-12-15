@@ -34,10 +34,10 @@ def get_service(service_id):
         # Формуємо список майстрів
         specialists = [
             {
-                "id": user.id,
+                "id": master.id,  # Використовуємо ID майстра з таблиці Master
                 "name": f"{user.first_name} {user.last_name}",
-                "age": calculate_age(user.date_of_birth),
-                "bio": master.bio,
+                "age": calculate_age(user.date_of_birth) if user.date_of_birth else "N/A",
+                "bio": master.bio or "No bio available",
                 "image": "/path/to/default-avatar.jpg",  # Замініть на реальний шлях до фото
             }
             for master, user in masters
@@ -54,6 +54,7 @@ def get_service(service_id):
         return jsonify({"error": "Database error", "details": str(e)}), 500
     except Exception as e:
         return jsonify({"error": "Service not found", "details": str(e)}), 404
+
 
 
 @services_bp.route('/', methods=['POST'])
