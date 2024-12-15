@@ -28,21 +28,22 @@ def create_booking():
     print("Received booking data:", json.dumps(data, indent=4))  # Логування отриманих даних
 
     try:
-        # Перевірка існування користувача, майстра та послуги
+        # Перевірка існування користувача та майстра
         user = User.query.get(data.get('user_id'))
         master = Master.query.get(data.get('master_id'))
-        service = Service.query.get(data.get('service_id'))
 
-        if not user or not master or not service:
-            return jsonify({"error": "Invalid user, master, or service ID"}), 400
+        if not user or not master:
+            return jsonify({"error": "Invalid user or master ID"}), 400
+
+        # Автоматичне отримання service_id з майстра
+        service_id = master.service_id
 
         # Створення нового бронювання
         new_booking = Booking(
             user_id=data.get('user_id'),
             master_id=data.get('master_id'),
-            service_id=data.get('service_id'),
-            booking_datetime=data.get('booking_datetime'),
-            status=data.get('status', 'pending')  # Значення за замовчуванням для статусу
+            service_id=service_id,  # Визначаємо service_id автоматично
+            booking_datetime=data.get('booking_datetime')
         )
 
         db.session.add(new_booking)
@@ -52,6 +53,7 @@ def create_booking():
     except IntegrityError:
         db.session.rollback()
         return jsonify({"error": "Database error"}), 500
+
 
 @bookings_bp.route('/<int:booking_id>', methods=['PUT'])
 def update_booking(booking_id):
@@ -74,3 +76,4 @@ def delete_booking(booking_id):
     db.session.delete(booking)
     db.session.commit()
     return jsonify({'message': 'Booking deleted successfully'}), 200
+

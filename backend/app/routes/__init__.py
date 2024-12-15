@@ -6,6 +6,7 @@ from .masters import masters_bp
 from .clients import clients_bp
 from .news import news_bp
 from .reviews import reviews_bp
+from .users import users_bp
 
 def register_routes(app):
     app.register_blueprint(services_bp, url_prefix='/services')
@@ -16,3 +17,5 @@ def register_routes(app):
     app.register_blueprint(clients_bp, url_prefix='/clients')
     app.register_blueprint(news_bp,  url_prefix='/news')
     app.register_blueprint(reviews_bp, url_prefix='/reviews')
+    app.register_blueprint(users_bp, url_prefix='/users')
+
