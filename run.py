@@ -9,6 +9,7 @@ app = create_app()
 CORS(app)
 
 
+# Команда для створення адміністратора
 @app.cli.command("create-admin")
 @click.argument("email")
 @click.argument("password")
@@ -22,13 +23,28 @@ def create_admin(email, password):
         first_name="Admin",
         last_name="Admin",
         date_of_birth=datetime(2000, 1, 1),  # Дата народження за замовчуванням
-        phone_number="0000000000",           # Телефон за замовчуванням
+        phone_number="0000000000",  # Телефон за замовчуванням
         email=email
     )
     new_admin.set_password(password)
     db.session.add(new_admin)
     db.session.commit()
     print(f"Admin with email {email} created successfully.")
+
+
+# Команда для оновлення пароля адміністратора
+@app.cli.command("update-admin-password")
+@click.argument("email")
+@click.argument("new_password")
+def update_admin_password(email, new_password):
+    admin = User.query.filter_by(email=email).first()
+    if not admin:
+        print(f"No admin found with email {email}.")
+        return
+
+    admin.set_password(new_password)
+    db.session.commit()
+    print(f"Password for admin {email} updated successfully.")
 
 
 if __name__ == "__main__":
