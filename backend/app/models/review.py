@@ -15,5 +15,5 @@ class Review(db.Model):
             "client_id": self.client_id,
             "rating": self.rating,
             "comment": self.comment,
-            "created_at": self.created_at.isoformat() if self.created_at else Noneя
+            "created_at": self.created_at.isoformat() if self.created_at else None
         }

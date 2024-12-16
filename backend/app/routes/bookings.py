@@ -77,3 +77,22 @@ def delete_booking(booking_id):
     db.session.commit()
     return jsonify({'message': 'Booking deleted successfully'}), 200
 
+
+
+@bookings_bp.route('/client/<int:user_id>/appointments', methods=['GET'])
+def get_client_appointments(user_id):
+    """Отримати всі бронювання клієнта за user_id"""
+    bookings = Booking.query.filter_by(user_id=user_id).all()
+
+    appointments = []
+    for booking in bookings:
+        master = Master.query.get(booking.master_id)
+        if master:
+            user_data = User.query.get(master.user_id)  # Отримуємо дані майстра
+            appointments.append({
+                "id": booking.id,
+                "master_name": f"{user_data.first_name} {user_data.last_name}",
+                "booking_datetime": booking.booking_datetime.strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+    return jsonify(appointments), 200

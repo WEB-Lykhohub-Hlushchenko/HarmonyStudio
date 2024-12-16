@@ -16,6 +16,7 @@ def get_masters():
     return jsonify([master.to_dict() for master in masters]), 200
 
 
+
 @masters_bp.route('/<int:user_id>', methods=['GET'])
 def get_master(user_id):
     """Отримати інформацію про конкретного майстра разом із даними користувача"""
@@ -110,21 +111,26 @@ def get_free_times(master_id):
 
 @masters_bp.route('/<int:master_id>/free-times', methods=['POST'])
 def add_free_time(master_id):
-    """Додати вільний час для майстра"""
+    """Додати або оновити вільний час для майстра"""
     master = Master.query.get_or_404(master_id)
     data = request.get_json()
-    free_time = data.get("free_time")
+    free_time_input = data.get("free_time")  # Вхідний рядок із часом
 
-    if not free_time:
+    if not free_time_input:
         return jsonify({"error": "Free time is required"}), 400
 
-    # Додаємо вільний час у список
-    if master.free_times is None:
-        master.free_times = []
-    master.free_times.append(free_time)
+    # Розділяємо введений рядок часу через кому та чистимо пробіли
+    new_times = [time.strip() for time in free_time_input.split(",") if time.strip()]
 
+    # Об'єднуємо з уже існуючим часом
+    existing_times = master.free_times if master.free_times else []
+    updated_times = list(set(existing_times + new_times))  # Видаляємо дублі
+
+    master.free_times = updated_times  # Оновлюємо JSON поле
     db.session.commit()
-    return jsonify({"message": "Free time added successfully", "free_times": master.free_times}), 201
+
+    return jsonify({"message": "Free time updated successfully", "free_times": master.free_times}), 200
+
 
 @masters_bp.route('/<int:master_id>/appointments', methods=['GET'])
 def get_master_appointments(master_id):
@@ -143,3 +149,18 @@ def get_master_appointments(master_id):
 
     return jsonify(appointments), 200
 
+@masters_bp.route('/<int:master_id>/free-times/filtered', methods=['GET'])
+def get_filtered_free_times(master_id):
+    """Отримати список вільного часу, відфільтрованого від зайнятих слотів"""
+    master = Master.query.get_or_404(master_id)
+
+    if not master.free_times:
+        return jsonify({"free_times": []}), 200
+
+    # Отримати зайняті слоти
+    booked_slots = [booking.booking_datetime.strftime("%Y-%m-%d %H:%M") for booking in Booking.query.filter_by(master_id=master_id).all()]
+
+    # Фільтруємо доступні слоти
+    filtered_times = [time for time in master.free_times if time not in booked_slots]
+
+    return jsonify({"free_times": filtered_times}), 200
